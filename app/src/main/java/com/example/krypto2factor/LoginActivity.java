@@ -138,13 +138,6 @@ public class LoginActivity extends AppCompatActivity {
             animation.setDuration(500);
             animation.start();
 
-            // Create Get Params
-            Map<String, String> mParams = new HashMap<String, String>();
-            mParams.put("email", email);
-            mParams.put("password", password);
-            mParams.put("device_id", mDeviceId);
-
-            JSONObject jsonParams = new JSONObject(mParams);
             // Create Request Queue
             queue = Volley.newRequestQueue(this);
 
