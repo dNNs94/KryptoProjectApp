@@ -174,7 +174,7 @@ public class LoginActivity extends AppCompatActivity {
                                             break;
                                     }
                                 }catch (JSONException err){
-                                    Log.d("Error", err.toString());
+                                    Log.d(TAG, err.toString());
                                 }
 
                             } catch (Exception e) {
