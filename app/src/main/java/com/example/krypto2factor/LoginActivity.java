@@ -22,8 +22,10 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -147,35 +149,41 @@ public class LoginActivity extends AppCompatActivity {
             queue = Volley.newRequestQueue(this);
 
             // Create a JSON Object Request
-            JsonObjectRequest req = new JsonObjectRequest
-                    (Request.Method.POST, URL, jsonParams, new Response.Listener<JSONObject>() {
+            StringRequest req = new StringRequest
+                    (Request.Method.POST, URL, new Response.Listener<String>() {
 
                         // Catch the Response
                         @Override
-                        public void onResponse(JSONObject response) {
+                        public void onResponse(String response) {
                             try {
-                                Log.d(TAG, "RESPONSE: " + response.toString());
-                                // Get object parameter-values into variables
-                                int status = response.getInt("status");
-                                String message = response.getString("message");
-                                int data = response.getInt("data");
-                                // Switch through status code to determine further action
-                                switch(status){
-                                    // 200 - Success! Continue
-                                    case 200:
-                                        // ToDo: Continue to request_otp + intent to otp activity
-                                        Log.d(TAG, "Data received: " + data);
-                                        mEmailView.setError(message);
-                                        mEmailView.requestFocus();
-                                        break;
-                                    // 403 - Forbidden! Display error message
-                                    case 403:
-                                    // 404 - Not found! Display error message
-                                    case 404:
-                                        mEmailView.setError(message);
-                                        mEmailView.requestFocus();
-                                        break;
+                                Log.d(TAG, "RESPONSE: " + response);
+                                try {
+                                    JSONObject jsonObject = new JSONObject(response);
+                                    // Get object parameter-values into variables
+                                    int status = jsonObject.getInt("status");
+                                    String message = jsonObject.getString("message");
+                                    int data = jsonObject.getInt("data");
+                                    // Switch through status code to determine further action
+                                    switch(status){
+                                        // 200 - Success! Continue
+                                        case 200:
+                                            // ToDo: Continue to request_otp + intent to otp activity
+                                            Log.d(TAG, "Data received: " + data);
+                                            mEmailView.setError(message);
+                                            mEmailView.requestFocus();
+                                            break;
+                                        // 403 - Forbidden! Display error message
+                                        case 403:
+                                            // 404 - Not found! Display error message
+                                        case 404:
+                                            mEmailView.setError(message);
+                                            mEmailView.requestFocus();
+                                            break;
+                                    }
+                                }catch (JSONException err){
+                                    Log.d("Error", err.toString());
                                 }
+
                             } catch (Exception e) {
                                 // Log exceptions to debug
                                 Log.d(TAG, e.getMessage(), e);
@@ -197,7 +205,21 @@ public class LoginActivity extends AppCompatActivity {
                             mEmailView.setError("A Server Error Occured!");
                             mEmailView.requestFocus();
                         }
-                    });
+                    }) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/x-www-form-urlencoded; charset=UTF-8";
+                }
+
+                @Override
+                protected Map<String, String> getParams() throws AuthFailureError {
+                    Map<String, String> mParams = new HashMap<String, String>();
+                    mParams.put("email", email);
+                    mParams.put("password", password);
+                    mParams.put("device_id", mDeviceId);
+                    return mParams;
+                }
+            };
 
             queue.add(req);
         }
