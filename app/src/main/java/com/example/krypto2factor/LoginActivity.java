@@ -1,9 +1,6 @@
 package com.example.krypto2factor;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -21,9 +18,12 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,23 +33,23 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 public class LoginActivity extends AppCompatActivity {
 
+    // Finals
+    private static final String TAG = "LoginActivity";
+    private static final String URL = "http://10.0.2.2:8080/authenticate_app";
     // Volley Request queue
     RequestQueue queue;
-
     // UI references.
     private EditText mEmailView;
     private EditText mPasswordView;
     private ProgressBar mProgressView;
     private View mLoginFormView;
-
     // Util
     private String mDeviceId;
-
-    // Finals
-    private static final String TAG = "LoginActivity";
-    private static final String URL = "http://10.0.2.2:8080/authenticate_app";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,11 +57,11 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         // Set up login form
-        mEmailView = (EditText) findViewById(R.id.email);
-        mPasswordView = (EditText) findViewById(R.id.password);
+        mEmailView = findViewById(R.id.email);
+        mPasswordView = findViewById(R.id.password);
 
         // Setup login button
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        Button mEmailSignInButton = findViewById(R.id.email_sign_in_button);
 
         // Bind login method to click
         mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
@@ -87,7 +87,20 @@ public class LoginActivity extends AppCompatActivity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
-        mDeviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w(TAG, "getInstanceId failed", task.getException());
+                            return;
+                        }
+
+                        // Get new Instance ID token
+                        mDeviceId = task.getResult().getToken();
+                    }
+                });
+
     }
 
     /**
@@ -120,8 +133,7 @@ public class LoginActivity extends AppCompatActivity {
             mEmailView.setError(getString(R.string.error_field_required));
             focusView = mEmailView;
             cancel = true;
-        }
-        else if (!isEmailValid(email)) {
+        } else if (!isEmailValid(email)) {
             mEmailView.setError(getString(R.string.error_invalid_email));
             focusView = mEmailView;
             cancel = true;
@@ -131,8 +143,7 @@ public class LoginActivity extends AppCompatActivity {
             // There was an error; don't attempt login and focus the first
             // form field with an error.
             focusView.requestFocus();
-        }
-        else {
+        } else {
             // Animate progressbar ToDo: Make visible, adjust layout
             ProgressBarAnimation animation = new ProgressBarAnimation(mProgressView, 0, 100);
             animation.setDuration(500);
@@ -157,7 +168,7 @@ public class LoginActivity extends AppCompatActivity {
                                     String message = jsonObject.getString("message");
                                     int data = jsonObject.getInt("data");
                                     // Switch through status code to determine further action
-                                    switch(status){
+                                    switch (status) {
                                         // 200 - Success! Continue
                                         case 200:
                                             // ToDo: Continue to request_otp + intent to otp activity
@@ -173,7 +184,7 @@ public class LoginActivity extends AppCompatActivity {
                                             mEmailView.requestFocus();
                                             break;
                                     }
-                                }catch (JSONException err){
+                                } catch (JSONException err) {
                                     Log.d(TAG, err.toString());
                                 }
 
@@ -210,6 +221,7 @@ public class LoginActivity extends AppCompatActivity {
                     mParams.put("email", email);
                     mParams.put("password", password);
                     mParams.put("device_id", mDeviceId);
+                    mParams.put("device_name", android.os.Build.MODEL);
                     return mParams;
                 }
             };
@@ -221,7 +233,7 @@ public class LoginActivity extends AppCompatActivity {
     /**
      * Check entered Email against regular expression to have at least one
      * "@"-symbol between to letter-pairs
-    */
+     */
     private boolean isEmailValid(String email) {
         String regex = "^(.+)@(.+)$";
         Pattern p = Pattern.compile(regex);
@@ -232,11 +244,11 @@ public class LoginActivity extends AppCompatActivity {
 
     /**
      * Animate progressbar while receiving a result from the server
-    */
+     */
     public class ProgressBarAnimation extends Animation {
         private ProgressBar progressBar;
         private float from;
-        private float  to;
+        private float to;
 
         ProgressBarAnimation(ProgressBar progressBar, float from, float to) {
             super();

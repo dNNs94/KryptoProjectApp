@@ -8,13 +8,13 @@ import android.graphics.Color;
 import android.os.Build;
 import android.util.Log;
 
-import androidx.core.app.NotificationCompat;
-
 import com.example.krypto2factor.R;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 import java.util.Random;
+
+import androidx.core.app.NotificationCompat;
 
 public class FCMService extends FirebaseMessagingService {
 
@@ -58,24 +58,27 @@ public class FCMService extends FirebaseMessagingService {
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
-            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
+            String body = remoteMessage.getNotification().getBody();
+            String title = remoteMessage.getNotification().getTitle();
+            Log.d(TAG, "Message Notification Body: " + body);
+            showNotification(title, body);
         }
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
     }
 
-    private void showNotification(String title, String body){
-        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+    private void showNotification(String title, String body) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         String NOTIFICATION_CHANNEL_ID = "com.example.krypto2factor.test";
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, "Notification", NotificationManager.IMPORTANCE_DEFAULT);
 
             notificationChannel.setDescription("krypto2factor Channel test");
             notificationChannel.enableLights(true);
             notificationChannel.setLightColor(Color.BLUE);
-            notificationChannel.setVibrationPattern(new long[] { 0,1000,500,1000 });
+            notificationChannel.setVibrationPattern(new long[]{0, 1000, 500, 1000});
             notificationManager.createNotificationChannel(notificationChannel);
         }
 
