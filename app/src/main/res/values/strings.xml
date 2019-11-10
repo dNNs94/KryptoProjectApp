@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Krypto2Factor</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_username">Username</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="action_sign_up">Sign Up</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="login_successful">Login successful</string>
+    <string name="id">ID: %1$s</string>
+    <string name="username">%1$s</string>
+    <string name="email">Email: %1$s</string>
+    <string name="logout">Logout %1$s</string>
+    <string name="logoutConfirmation">Successfully logged out</string>
+    <string name="loginicon">LoginIcon</string>
+</resources>
