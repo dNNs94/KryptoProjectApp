@@ -126,7 +126,8 @@ public class LoginActivity extends AppCompatActivity {
             // There was an error; don't attempt login and focus the first
             // form field with an error.
             focusView.requestFocus();
-        } else {
+        }
+        else {
             // Animate progressbar ToDo: Make visible, adjust layout
             ProgressBarAnimation animation = new ProgressBarAnimation(mProgressView, 0, 100);
             animation.setDuration(500);

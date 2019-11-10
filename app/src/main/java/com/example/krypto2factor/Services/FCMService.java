@@ -31,7 +31,7 @@ public class FCMService extends FirebaseMessagingService {
         // If you want to send messages to this application instance or
         // manage this apps subscriptions on the server side, send the
         // Instance ID token to your app server.
-        //ToDo: sendRegistrationToServer(token);
+        // ToDo: sendRegistrationToServer(token);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class FCMService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
 
-            /*ToDo: if (/* Check if data needs to be processed by long running job  true) {
+            /*ToDo: if (/* Check if data needs to be processed by long running job == true) {
                 // For long-running tasks (10 seconds or more) use Firebase Job Dispatcher.
                 ToDo: scheduleJob();
             } else {
