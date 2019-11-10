@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -25,6 +26,8 @@ import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -96,8 +99,8 @@ public class LoginActivity extends AppCompatActivity {
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        final String email = mEmailView.getText().toString();
+        final String password = mPasswordView.getText().toString();
 
         // Reset locals | Track focusView and cancellation switch
         boolean cancel = false;
@@ -134,15 +137,18 @@ public class LoginActivity extends AppCompatActivity {
             animation.start();
 
             // Create Get Params
-            String getParams = "?email=" + email + "&password=" + password + "&device_id=" + mDeviceId;
+            Map<String, String> mParams = new HashMap<String, String>();
+            mParams.put("email", email);
+            mParams.put("password", password);
+            mParams.put("device_id", mDeviceId);
 
-            Log.d(TAG, "FERTIGE URL: " + getParams);  // ToDo: Remove Debugging
+            JSONObject jsonParams = new JSONObject(mParams);
             // Create Request Queue
             queue = Volley.newRequestQueue(this);
 
             // Create a JSON Object Request
             JsonObjectRequest req = new JsonObjectRequest
-                    (Request.Method.GET, URL + getParams, null, new Response.Listener<JSONObject>() {
+                    (Request.Method.POST, URL, jsonParams, new Response.Listener<JSONObject>() {
 
                         // Catch the Response
                         @Override
