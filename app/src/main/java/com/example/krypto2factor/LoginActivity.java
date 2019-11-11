@@ -1,5 +1,6 @@
 package com.example.krypto2factor;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -166,15 +167,14 @@ public class LoginActivity extends AppCompatActivity {
                                     // Get object parameter-values into variables
                                     int status = jsonObject.getInt("status");
                                     String message = jsonObject.getString("message");
-                                    int data = jsonObject.getInt("data");
                                     // Switch through status code to determine further action
                                     switch (status) {
                                         // 200 - Success! Continue
                                         case 200:
                                             // ToDo: Continue to request_otp + intent to otp activity
-                                            Log.d(TAG, "Data received: " + data);
-                                            mEmailView.setError(message);
-                                            mEmailView.requestFocus();
+                                            Intent otpIntent = getOtpIntent();
+                                            otpIntent.putExtra("deviceId", mDeviceId);
+                                            startActivity(otpIntent);
                                             break;
                                         // 403 - Forbidden! Display error message
                                         case 403:
@@ -240,6 +240,13 @@ public class LoginActivity extends AppCompatActivity {
         Matcher m = p.matcher(email);
 
         return m.matches();
+    }
+
+    /**
+     * Switch to OTPActivity via Intent
+     */
+    private Intent getOtpIntent(){
+        return new Intent(this, OTPActivity.class);
     }
 
     /**

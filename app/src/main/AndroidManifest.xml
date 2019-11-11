@@ -11,8 +11,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true"><!-- ToDo: REMOVE FOR SAFETY -->
+        android:usesCleartextTraffic="true">
+        <!-- ToDo: REMOVE CLEARTEXTTRAFFIC FOR SAFETY -->
+        <activity android:name=".MainActivity"></activity>
+        <activity android:name=".LoginActivity"><intent-filter>
+            <action android:name="android.intent.action.MAIN" />
 
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        </activity>
+        <activity android:name=".OTPActivity"></activity>
         <service
             android:name=".Services.FCMService"
             android:enabled="true"
@@ -22,16 +30,6 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".MainActivity">
-
-        </activity>
-        <activity android:name=".LoginActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
     </application>
 
 </manifest>

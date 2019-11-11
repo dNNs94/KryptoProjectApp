@@ -18,4 +18,7 @@
     <string name="logout">Logout %1$s</string>
     <string name="logoutConfirmation">Successfully logged out</string>
     <string name="loginicon">LoginIcon</string>
+    <string name="str_otp">Your OTP: %1$s</string>
+    <string name="str_otp_countdown">New OTP generated in: %1$s</string>
+    <string name="str_req_new_otp">Requesting new OTP…</string>
 </resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircularProgressBar">
+        <attr name="lineThickness" format="dimension" />
+        <attr name="progress" format="float" />
+        <attr name="progressBarColor" format="color" />
+        <attr name="min" format="integer" />
+        <attr name="max" format="integer" />
+    </declare-styleable>
+</resources>
