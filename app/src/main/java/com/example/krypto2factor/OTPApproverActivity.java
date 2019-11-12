@@ -12,6 +12,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.krypto2factor.Utils.VolleyCallback;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class OTPApproverActivity extends BroadcastReceiver {
 
     RequestQueue queue;
 
-    private void sendOtp(final String otp, final String userID, final OTPApproverActivity.VolleyCallback callback) {
+    private void sendOtp(final String otp, final String userID, final VolleyCallback callback) {
         Response.Listener<String> responseListener = new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -59,10 +60,6 @@ public class OTPApproverActivity extends BroadcastReceiver {
         queue.add(otpReq);
     }
 
-    public interface VolleyCallback {
-        void OnSuccess(String result);
-    }
-
     @Override
     public void onReceive(Context context, Intent intent) {
 
@@ -72,7 +69,7 @@ public class OTPApproverActivity extends BroadcastReceiver {
         }
         String otp = intentBundle.getString("otp");
         String userID = intentBundle.getString("user_id");
-        sendOtp(otp, userID, new OTPApproverActivity.VolleyCallback() {
+        sendOtp(otp, userID, new VolleyCallback() {
             @Override
             public void OnSuccess(String result) {
                 Log.d(TAG, "Send Answer");
