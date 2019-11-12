@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -28,6 +29,9 @@ public class OTPActivity extends AppCompatActivity {
     private CircularProgressBar mProgressBar;
     // Volley Request queue
     RequestQueue queue;
+    // Timer and switch to keep track of it
+    CountDownTimer timer;
+    boolean isRequestIntervalStopped = false;
     // Finals
     private static final String TAG = "OTPActivity";
     private static final String URL = "http://10.0.2.2:8080/request_otp_app";
@@ -42,7 +46,7 @@ public class OTPActivity extends AppCompatActivity {
         }
         else{*/
             Intent fromLoginIntent = getIntent();
-            String deviceId = fromLoginIntent.getStringExtra("deviceId");
+            final String deviceId = fromLoginIntent.getStringExtra("deviceId");
             Log.d(TAG, "Received intent extra: " + deviceId);
         //}
 
@@ -53,13 +57,13 @@ public class OTPActivity extends AppCompatActivity {
         mOtpText = findViewById(R.id.txt_otp);
         mCountdownText = findViewById(R.id.txt_countdown);
         mProgressBar = findViewById(R.id.pb_refresh);
+        final int otpLifetime = 60000;
 
-        // ToDo: Request OTP in a 1-Minute Loop while Application is active
         requestOtp(deviceId, new VolleyCallback() {
             @Override
             public void OnSuccess(String result) {
                 mOtpText.setText(getString(R.string.str_otp, result));
-                CountDownTimer timer = new CountDownTimer(60000, 1000) {
+                timer = new CountDownTimer(otpLifetime, 1000) {
                     @Override
                     public void onTick(long millisUntilFinished) {
                         long secondsLeft = (millisUntilFinished / 1000);
@@ -72,28 +76,33 @@ public class OTPActivity extends AppCompatActivity {
                         mCountdownText.setText(getString(R.string.str_req_new_otp));
                     }
                 }.start();
-                mProgressBar.setAnimatedProgress(100, 60000);
+
+                triggerOtpRequestInterval(otpLifetime, deviceId);
+                mProgressBar.setAnimatedProgress(100, otpLifetime);
             }
         });
-
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         // ToDo: Pause timer and save its state;
+        new Handler().removeCallbacksAndMessages(null);
+        isRequestIntervalStopped = true;
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
         // ToDo: Resume timer for request
+        isRequestIntervalStopped = false;
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         // ToDo: Save state of the timer;
+        isRequestIntervalStopped = true;
     }
 
     private void requestOtp(final String deviceId, final VolleyCallback callback) {
@@ -127,5 +136,41 @@ public class OTPActivity extends AppCompatActivity {
         };
 
         queue.add(otpReq);
+    }
+
+    private void triggerOtpRequestInterval(final int delay, final String deviceId) {
+        if(isRequestIntervalStopped) {
+            new Handler().removeCallbacksAndMessages(null);
+            return;
+        }
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                requestOtp(deviceId, new VolleyCallback() {
+                    @Override
+                    public void OnSuccess(String result) {
+                        mOtpText.setText(getString(R.string.str_otp, result));
+
+                        timer = new CountDownTimer(delay, 1000) {
+                            @Override
+                            public void onTick(long millisUntilFinished) {
+                                long secondsLeft = (millisUntilFinished / 1000);
+                                String displayText = getString(R.string.str_otp_countdown, String.valueOf(secondsLeft));
+                                mCountdownText.setText(displayText);
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                mCountdownText.setText(getString(R.string.str_req_new_otp));
+                            }
+                        }.start();
+
+                        triggerOtpRequestInterval(delay, deviceId);
+                        mProgressBar.setAnimatedProgress(100, delay);
+                    }
+                });
+            }
+        }, delay);
     }
 }
