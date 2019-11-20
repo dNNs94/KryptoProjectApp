@@ -6,6 +6,7 @@
     <string name="prompt_username">Username</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign in</string>
+    <string name="action_qr">Scan QR Code</string>
     <string name="action_sign_in_short">Sign in</string>
     <string name="action_sign_up">Sign Up</string>
     <string name="error_invalid_email">This email address is invalid</string>
@@ -21,4 +22,6 @@
     <string name="str_otp">Your OTP: %1$s</string>
     <string name="str_otp_countdown">New OTP generated in: %1$s</string>
     <string name="str_req_new_otp">Requesting new OTP…</string>
+    <string name="str_check_qr">Checking for QR Code…</string>
+    <string name="str_found_otp">Found OTP: %1$s</string>
 </resources>

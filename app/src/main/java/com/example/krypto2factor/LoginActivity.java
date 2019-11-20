@@ -1,6 +1,7 @@
 package com.example.krypto2factor;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -42,6 +43,7 @@ public class LoginActivity extends AppCompatActivity {
     // Finals
     private static final String TAG = "LoginActivity";
     private static final String URL = "http://10.0.2.2:8080/authenticate_app";
+    private static final int QR_REQUEST_CODE = 100;
     // Volley Request queue
     RequestQueue queue;
     // UI references.
@@ -49,6 +51,8 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPasswordView;
     private ProgressBar mProgressView;
     private View mLoginFormView;
+    private Button mEmailSignInButton;
+    private Button mQRCodeButton;
     // Util
     private String mDeviceId;
 
@@ -61,14 +65,24 @@ public class LoginActivity extends AppCompatActivity {
         mEmailView = findViewById(R.id.email);
         mPasswordView = findViewById(R.id.password);
 
-        // Setup login button
-        Button mEmailSignInButton = findViewById(R.id.email_sign_in_button);
+        // Setup login buttons
+        mEmailSignInButton = findViewById(R.id.email_sign_in_button);
+        mQRCodeButton = findViewById(R.id.btn_qr);
 
         // Bind login method to click
         mEmailSignInButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
+            public void onClick(View v) {
                 attemptLogin();
+            }
+        });
+
+        // Bind QR code scan to click
+        mQRCodeButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                // ToDo: Open Camera to scan for QR Code result
+                startActivityForResult(new Intent(LoginActivity.this, QRScanActivity.class), QR_REQUEST_CODE);
             }
         });
 
@@ -102,6 +116,21 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 });
 
+    }
+
+    /**
+     * Checks if QR-Code Scan was successful and registers device in backend if so
+     */
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == QR_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                String receivedOtp = data.getDataString();
+                // ToDo: Make request to register device and login on success -> intent to OtpActivity
+            }
+        }
     }
 
     /**
