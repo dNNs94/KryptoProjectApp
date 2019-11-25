@@ -148,6 +148,7 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess(String result) {
                                 if(result.contains("Verification valid")) {
+                                    // ToDo: send request to register device in DB before intending
                                     getOtpIntent();
                                 }
                                 else {
@@ -323,6 +324,12 @@ public class LoginActivity extends AppCompatActivity {
         queue.add(req);
     }
 
+    /**
+     * Volley request to login to the app via py backend using QR-Scan
+     * @param userId userId from QR ({@link QRScanActivity})
+     * @param otp users otp from QR ({@link QRScanActivity})
+     * @param callback callback method to handle result via Interface (see: {@link com.example.krypto2factor.Utils.VolleyCallback})
+     */
     private void requestLoginWithQR(final String userId, final String otp, final VolleyCallback callback) {
         Response.Listener<String> responseListener = new Response.Listener<String>() {
             @Override
