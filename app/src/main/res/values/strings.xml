@@ -23,5 +23,5 @@
     <string name="str_otp_countdown">New OTP generated in: %1$s</string>
     <string name="str_req_new_otp">Requesting new OTP…</string>
     <string name="str_check_qr">Checking for QR Code…</string>
-    <string name="str_found_otp">Found OTP: %1$s</string>
+    <string name="str_found_otp">Found OTP!</string>
 </resources>

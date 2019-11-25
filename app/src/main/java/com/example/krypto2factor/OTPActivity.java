@@ -61,7 +61,7 @@ public class OTPActivity extends AppCompatActivity {
 
         requestOtp(deviceId, new VolleyCallback() {
             @Override
-            public void OnSuccess(String result) {
+            public void onSuccess(String result) {
                 mOtpText.setText(getString(R.string.str_otp, result));
                 timer = new CountDownTimer(otpLifetime, 1000) {
                     @Override
@@ -105,11 +105,16 @@ public class OTPActivity extends AppCompatActivity {
         isRequestIntervalStopped = true;
     }
 
+    /**
+     * Requests a new OTP from python backend
+     * @param deviceId unique identifier of the device (FCMID)
+     * @param callback callback function to handle the result
+     */
     private void requestOtp(final String deviceId, final VolleyCallback callback) {
         Response.Listener<String> responseListener = new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                callback.OnSuccess(response);
+                callback.onSuccess(response);
             }
         };
 
@@ -138,6 +143,11 @@ public class OTPActivity extends AppCompatActivity {
         queue.add(otpReq);
     }
 
+    /**
+     * Triggers new otp request in set interval, runtime handled in lifeclycle methods
+     * @param delay time until next otp will be requested
+     * @param deviceId unique identifier of the device (FCMID)
+     */
     private void triggerOtpRequestInterval(final int delay, final String deviceId) {
         if(isRequestIntervalStopped) {
             new Handler().removeCallbacksAndMessages(null);
@@ -149,7 +159,7 @@ public class OTPActivity extends AppCompatActivity {
             public void run() {
                 requestOtp(deviceId, new VolleyCallback() {
                     @Override
-                    public void OnSuccess(String result) {
+                    public void onSuccess(String result) {
                         mOtpText.setText(getString(R.string.str_otp, result));
 
                         timer = new CountDownTimer(delay, 1000) {

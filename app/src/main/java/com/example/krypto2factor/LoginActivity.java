@@ -1,7 +1,6 @@
 package com.example.krypto2factor;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -22,6 +21,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.krypto2factor.Utils.VolleyCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -42,7 +42,8 @@ public class LoginActivity extends AppCompatActivity {
 
     // Finals
     private static final String TAG = "LoginActivity";
-    private static final String URL = "http://10.0.2.2:8080/authenticate_app";
+    private static final String URL_LOGIN_PW = "http://10.0.2.2:8080/authenticate_app";
+    private static final String URL_QR_CODE = "http://10.0.2.2:8080/verify_otp_app";
     private static final int QR_REQUEST_CODE = 100;
     // Volley Request queue
     RequestQueue queue;
@@ -102,6 +103,10 @@ public class LoginActivity extends AppCompatActivity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
+
+        // Create Request Queue
+        queue = Volley.newRequestQueue(this);
+
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                     @Override
@@ -120,6 +125,9 @@ public class LoginActivity extends AppCompatActivity {
 
     /**
      * Checks if QR-Code Scan was successful and registers device in backend if so
+     * @param requestCode code to identify which request data is awaited
+     * @param resultCode code to define whether data was received successfully or not
+     * @param data extras put into the intent to receive here
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -127,8 +135,37 @@ public class LoginActivity extends AppCompatActivity {
 
         if (requestCode == QR_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                String receivedOtp = data.getDataString();
-                // ToDo: Make request to register device and login on success -> intent to OtpActivity
+                String receivedData = data.getDataString();
+                if(receivedData != null && !receivedData.equals("")) {
+                    try{
+                        JSONObject jsonObject = new JSONObject(data.getDataString());
+                        String receivedOtp = jsonObject.getString("otp");
+                        Log.d(TAG, "OTP RECEIVED: " + receivedOtp);
+                        String receivedUserId = jsonObject.getString("user_id");
+                        Log.d(TAG, "USER_ID RECEIVED: " + receivedUserId);
+
+                        requestLoginWithQR(receivedUserId, receivedOtp, new VolleyCallback() {
+                            @Override
+                            public void onSuccess(String result) {
+                                if(result.contains("Verification valid")) {
+                                    getOtpIntent();
+                                }
+                                else {
+                                    mEmailView.setError("OTP Rejected");
+                                    mEmailView.requestFocus();
+                                }
+                            }
+                        });
+                    }
+                    catch (Exception e){
+                        mEmailView.setError("Something went wrong");
+                        mEmailView.requestFocus();
+
+                        Log.d(TAG, e.getMessage(), e);
+                        e.printStackTrace();
+                    }
+
+                }
             }
         }
     }
@@ -174,94 +211,53 @@ public class LoginActivity extends AppCompatActivity {
             // form field with an error.
             focusView.requestFocus();
         } else {
-            // Animate progressbar ToDo: Make visible, adjust layout
-            ProgressBarAnimation animation = new ProgressBarAnimation(mProgressView, 0, 100);
-            animation.setDuration(500);
-            animation.start();
-
-            // Create Request Queue
-            queue = Volley.newRequestQueue(this);
-
-            // Create a JSON Object Request
-            StringRequest req = new StringRequest
-                    (Request.Method.POST, URL, new Response.Listener<String>() {
-
-                        // Catch the Response
-                        @Override
-                        public void onResponse(String response) {
-                            try {
-                                Log.d(TAG, "RESPONSE: " + response);
-                                try {
-                                    JSONObject jsonObject = new JSONObject(response);
-                                    // Get object parameter-values into variables
-                                    int status = jsonObject.getInt("status");
-                                    String message = jsonObject.getString("message");
-                                    // Switch through status code to determine further action
-                                    switch (status) {
-                                        // 200 - Success! Continue
-                                        case 200:
-                                            // ToDo: Continue to request_otp + intent to otp activity
-                                            Intent otpIntent = getOtpIntent();
-                                            otpIntent.putExtra("deviceId", mDeviceId);
-                                            startActivity(otpIntent);
-                                            break;
-                                        // 403 - Forbidden! Display error message
-                                        case 403:
-                                            // 404 - Not found! Display error message
-                                        case 404:
-                                            mEmailView.setError(message);
-                                            mEmailView.requestFocus();
-                                            break;
-                                    }
-                                } catch (JSONException err) {
-                                    Log.d(TAG, err.toString());
-                                }
-
-                            } catch (Exception e) {
-                                // Log exceptions to debug
-                                Log.d(TAG, e.getMessage(), e);
-                                e.printStackTrace();
-                                // Notify user something went wrong
-                                mEmailView.setError("A Server Error Occured!");
-                                mEmailView.requestFocus();
+            requestLoginWithPW(email, password, new VolleyCallback() {
+                @Override
+                public void onSuccess(String result) {
+                    try {
+                        Log.d(TAG, "RESPONSE: " + result);
+                        try {
+                            JSONObject jsonObject = new JSONObject(result);
+                            // Get object parameter-values into variables
+                            int status = jsonObject.getInt("status");
+                            String message = jsonObject.getString("message");
+                            // Switch through status code to determine further action
+                            switch (status) {
+                                // 200 - Success! Continue
+                                case 200:
+                                    Intent otpIntent = getOtpIntent();
+                                    otpIntent.putExtra("deviceId", mDeviceId);
+                                    startActivity(otpIntent);
+                                    break;
+                                // 403 - Forbidden! Display error message
+                                case 403:
+                                // 404 - Not found! Display error message
+                                case 404:
+                                    mEmailView.setError(message);
+                                    mEmailView.requestFocus();
+                                    break;
                             }
+                        } catch (JSONException err) {
+                            Log.d(TAG, err.toString());
                         }
-                    }, new Response.ErrorListener() {
 
-                        @Override
-                        public void onErrorResponse(VolleyError error) {
-                            // Log exceptions to debug
-                            Log.d(TAG, error.getMessage(), error);
-                            error.printStackTrace();
-
-                            // Notify user something went wrong
-                            mEmailView.setError("A Server Error Occured!");
-                            mEmailView.requestFocus();
-                        }
-                    }) {
-                @Override
-                public String getBodyContentType() {
-                    return "application/x-www-form-urlencoded; charset=UTF-8";
+                    } catch (Exception e) {
+                        // Log exceptions to debug
+                        Log.d(TAG, e.getMessage(), e);
+                        e.printStackTrace();
+                        // Notify user something went wrong
+                        mEmailView.setError("A Server Error Occured!");
+                        mEmailView.requestFocus();
+                    }
                 }
-
-                @Override
-                protected Map<String, String> getParams() throws AuthFailureError {
-                    Map<String, String> mParams = new HashMap<String, String>();
-                    mParams.put("email", email);
-                    mParams.put("password", password);
-                    mParams.put("device_id", mDeviceId);
-                    mParams.put("device_name", android.os.Build.MODEL);
-                    return mParams;
-                }
-            };
-
-            queue.add(req);
+            });
         }
     }
 
     /**
      * Check entered Email against regular expression to have at least one
      * "@"-symbol between to letter-pairs
+     * @param email users email address (Value from {@link LoginActivity#mEmailView})
      */
     private boolean isEmailValid(String email) {
         String regex = "^(.+)@(.+)$";
@@ -276,6 +272,92 @@ public class LoginActivity extends AppCompatActivity {
      */
     private Intent getOtpIntent(){
         return new Intent(this, OTPActivity.class);
+    }
+
+    /**
+     * Volley request to login to the app via py backend (used in {@link LoginActivity#attemptLogin()})
+     * @param email users email address
+     * @param password users password
+     * @param callback callback method to handle result via Interface (see: {@link com.example.krypto2factor.Utils.VolleyCallback})
+     */
+    private void requestLoginWithPW(final String email, final String password, final VolleyCallback callback) {
+        Response.Listener<String> responseListener = new Response.Listener<String>() {
+            // Catch the Response
+            @Override
+            public void onResponse(String response) {
+                callback.onSuccess(response);
+            }
+        };
+
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // Log exceptions to debug
+                Log.d(TAG, error.getMessage(), error);
+                error.printStackTrace();
+
+                // Notify user something went wrong
+                mEmailView.setError("A Server Error Occured!");
+                mEmailView.requestFocus();
+            }
+        };
+
+        StringRequest req = new StringRequest(Request.Method.POST, URL_LOGIN_PW, responseListener, errorListener) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> mParams = new HashMap<String, String>();
+                mParams.put("email", email);
+                mParams.put("password", password);
+                mParams.put("device_id", mDeviceId);
+                mParams.put("device_name", android.os.Build.MODEL);
+                return mParams;
+            }
+        };
+
+        queue.add(req);
+    }
+
+    private void requestLoginWithQR(final String userId, final String otp, final VolleyCallback callback) {
+        Response.Listener<String> responseListener = new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                callback.onSuccess(response);
+            }
+        };
+
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, error.getMessage(), error);
+                error.printStackTrace();
+
+                mEmailView.setError("Error while resolving QR-Code!");
+                mEmailView.requestFocus();
+            }
+        };
+
+        StringRequest req = new StringRequest(Request.Method.POST, URL_QR_CODE, responseListener, errorListener) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> mParams = new HashMap<String, String>();
+                mParams.put("otp", otp);
+                mParams.put("user_id", userId);
+                return mParams;
+            }
+        };
+
+        queue.add(req);
     }
 
     /**

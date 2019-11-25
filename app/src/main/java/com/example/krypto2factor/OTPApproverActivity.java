@@ -29,7 +29,7 @@ public class OTPApproverActivity extends BroadcastReceiver {
         Response.Listener<String> responseListener = new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                callback.OnSuccess(response);
+                callback.onSuccess(response);
             }
         };
 
@@ -71,7 +71,7 @@ public class OTPApproverActivity extends BroadcastReceiver {
         String userID = intentBundle.getString("user_id");
         sendOtp(otp, userID, new VolleyCallback() {
             @Override
-            public void OnSuccess(String result) {
+            public void onSuccess(String result) {
                 Log.d(TAG, "Send Answer");
             }
         });

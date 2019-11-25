@@ -1,10 +1,14 @@
 package com.example.krypto2factor;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.SurfaceHolder;
@@ -98,15 +102,28 @@ public class QRScanActivity extends AppCompatActivity {
                     mTxtBarcode.post(new Runnable() {
                         @Override
                         public void run() {
+                            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+                            if (v != null) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+                                }
+                                else{
+                                    v.vibrate(500);
+                                }
+                            }
+
                             mTxtBarcode.removeCallbacks(null);
                             String intentData = qrCodes.valueAt(0).rawValue;
-                            mTxtBarcode.setText(getString(R.string.str_found_otp, intentData));
+                            Log.d(TAG,"INTENDATA IS: " + intentData);
+                            mTxtBarcode.setText(getString(R.string.str_found_otp));
                             Intent result = new Intent();
                             result.setData(Uri.parse(intentData));
                             setResult(RESULT_OK, result);
                             finish();
                         }
                     });
+
                 }
             }
         });
