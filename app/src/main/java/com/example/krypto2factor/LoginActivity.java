@@ -1,6 +1,7 @@
 package com.example.krypto2factor;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -44,6 +46,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static final String URL_LOGIN_PW = "http://10.0.2.2:8080/authenticate_app";
     private static final String URL_QR_CODE = "http://10.0.2.2:8080/verify_otp_app";
+    private static final String URL_REG_DEV = "http://10.0.2.2:8080/insert_user_device";
     private static final int QR_REQUEST_CODE = 100;
     // Volley Request queue
     RequestQueue queue;
@@ -82,7 +85,6 @@ public class LoginActivity extends AppCompatActivity {
         mQRCodeButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                // ToDo: Open Camera to scan for QR Code result
                 startActivityForResult(new Intent(LoginActivity.this, QRScanActivity.class), QR_REQUEST_CODE);
             }
         });
@@ -127,7 +129,7 @@ public class LoginActivity extends AppCompatActivity {
      * Checks if QR-Code Scan was successful and registers device in backend if so
      * @param requestCode code to identify which request data is awaited
      * @param resultCode code to define whether data was received successfully or not
-     * @param data extras put into the intent to receive here
+     * @param data extras put into the intent to receive here (userId and otp)
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -139,17 +141,30 @@ public class LoginActivity extends AppCompatActivity {
                 if(receivedData != null && !receivedData.equals("")) {
                     try{
                         JSONObject jsonObject = new JSONObject(data.getDataString());
+
                         String receivedOtp = jsonObject.getString("otp");
-                        Log.d(TAG, "OTP RECEIVED: " + receivedOtp);
                         String receivedUserId = jsonObject.getString("user_id");
-                        Log.d(TAG, "USER_ID RECEIVED: " + receivedUserId);
 
                         requestLoginWithQR(receivedUserId, receivedOtp, new VolleyCallback() {
                             @Override
                             public void onSuccess(String result) {
                                 if(result.contains("Verification valid")) {
-                                    // ToDo: send request to register device in DB before intending
-                                    getOtpIntent();
+                                    requestDeviceRegistration(new VolleyCallback() {
+                                        @Override
+                                        public void onSuccess(String result) {
+                                            if(result.contains("Successfully inserted device")) {
+                                                Toast.makeText(getApplicationContext(), "Device registration complete!", Toast.LENGTH_SHORT).show();
+                                                getOtpIntent();
+                                            }
+                                            else if(result.contains("Device is already active")) {
+                                                Toast.makeText(getApplicationContext(), "Logged in with active device!", Toast.LENGTH_SHORT).show();
+                                                getOtpIntent();
+                                            }
+                                            else {
+                                                Toast.makeText(getApplicationContext(), "Error during device registration!", Toast.LENGTH_LONG).show();
+                                            }
+                                        }
+                                    });
                                 }
                                 else {
                                     mEmailView.setError("OTP Rejected");
@@ -360,6 +375,47 @@ public class LoginActivity extends AppCompatActivity {
                 Map<String, String> mParams = new HashMap<String, String>();
                 mParams.put("otp", otp);
                 mParams.put("user_id", userId);
+                return mParams;
+            }
+        };
+
+        queue.add(req);
+    }
+
+    /**
+     * Volley request to register this device in database via py backend
+     * @param callback callback method to handle result via Interface (see: {@link com.example.krypto2factor.Utils.VolleyCallback})
+     */
+    private void requestDeviceRegistration(final VolleyCallback callback) {
+        Response.Listener<String> responseListener = new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                callback.onSuccess(response);
+            }
+        };
+
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, error.getMessage(), error);
+                error.printStackTrace();
+
+                mEmailView.setError("Error while registering Device!");
+                mEmailView.requestFocus();
+            }
+        };
+
+        StringRequest req = new StringRequest(Request.Method.POST, URL_REG_DEV, responseListener, errorListener) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> mParams = new HashMap<String, String>();
+                mParams.put("device_id", mDeviceId);
+                mParams.put("device_name", Build.MODEL);
                 return mParams;
             }
         };
