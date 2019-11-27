@@ -40,8 +40,6 @@ import java.util.regex.Pattern;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-// ToDo: Make user stay logged in after successful auth: https://stackoverflow.com/questions/12744337/how-to-keep-android-applications-always-be-logged-in-state
-
 public class LoginActivity extends AppCompatActivity {
 
     // Finals
@@ -49,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String URL_LOGIN_PW = "http://10.0.2.2:8080/authenticate_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080
     private static final String URL_QR_CODE = "http://10.0.2.2:8080/verify_otp_app";
     private static final String URL_REG_DEV = "http://10.0.2.2:8080/insert_user_device";
+    private static final String URL_LOGIN_DEVICE_ID = "http://10.0.2.2:8080/login_account_app";
     private static final int QR_REQUEST_CODE = 100;
     // Volley Request queue
     RequestQueue queue;
@@ -107,10 +106,10 @@ public class LoginActivity extends AppCompatActivity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
-
         // Create Request Queue
         queue = Volley.newRequestQueue(this);
 
+        // Get Device unique Token to identify in backend
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
                     @Override
@@ -122,9 +121,25 @@ public class LoginActivity extends AppCompatActivity {
 
                         // Get new Instance ID token
                         mDeviceId = task.getResult().getToken();
+
+                        // Login user instantly if already has registered and activated this device
+                        if(mDeviceId.length() > 0) {
+                            requestDeviceLogin(new VolleyCallback() {
+                                @Override
+                                public void onSuccess(String result) {
+                                    if(result.contains("Login successful")) {
+                                        Intent intent = getOtpIntent();
+                                        intent.putExtra("deviceId", mDeviceId);
+                                        startActivity(intent);
+                                    }
+                                    else {
+                                        Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+                        }
                     }
                 });
-
     }
 
     /**
@@ -163,7 +178,6 @@ public class LoginActivity extends AppCompatActivity {
                                             else if(result.contains("Device already active")) {
                                                 Toast.makeText(getApplicationContext(), "Logged in with active device!", Toast.LENGTH_SHORT).show();
                                                 Intent otpIntent = getOtpIntent();
-                                                getOtpIntent();
                                                 otpIntent.putExtra("deviceId", mDeviceId);
                                                 startActivity(otpIntent);
                                             }
@@ -341,7 +355,7 @@ public class LoginActivity extends AppCompatActivity {
                 mParams.put("email", email);
                 mParams.put("password", password);
                 mParams.put("device_id", mDeviceId);
-                mParams.put("device_name", android.os.Build.MODEL);
+                mParams.put("device_name", Build.MODEL);
                 return mParams;
             }
         };
@@ -427,6 +441,46 @@ public class LoginActivity extends AppCompatActivity {
                 mParams.put("device_id", mDeviceId);
                 mParams.put("device_name", Build.MODEL);
                 mParams.put("user_id", userId);
+                return mParams;
+            }
+        };
+
+        queue.add(req);
+    }
+
+    /**
+     * Volley request to login the device automatically when userdata is stored (user already logged in from this device)
+     * @param callback callback method to handle result via Interface (see: {@link com.example.krypto2factor.Utils.VolleyCallback})
+     */
+    private void requestDeviceLogin(final VolleyCallback callback) {
+        Response.Listener<String> responseListener = new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                callback.onSuccess(response);
+            }
+        };
+
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, error.getMessage(), error);
+                error.printStackTrace();
+
+                mEmailView.setError("Error while registering Device!");
+                mEmailView.requestFocus();
+            }
+        };
+
+        StringRequest req = new StringRequest(Request.Method.POST, URL_LOGIN_DEVICE_ID, responseListener, errorListener) {
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+            }
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> mParams = new HashMap<String, String>();
+                mParams.put("device_id", mDeviceId);
                 return mParams;
             }
         };
