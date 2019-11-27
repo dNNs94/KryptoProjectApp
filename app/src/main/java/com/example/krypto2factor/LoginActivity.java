@@ -467,7 +467,7 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(TAG, error.getMessage(), error);
                 error.printStackTrace();
 
-                mEmailView.setError("Error while registering Device!");
+                mEmailView.setError("Error while logging in Device!");
                 mEmailView.requestFocus();
             }
         };
