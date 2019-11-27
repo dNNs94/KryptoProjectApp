@@ -114,11 +114,12 @@ public class QRScanActivity extends AppCompatActivity {
                             }
 
                             mTxtBarcode.removeCallbacks(null);
-                            String intentData = qrCodes.valueAt(0).rawValue;
-                            Log.d(TAG,"INTENDATA IS: " + intentData);
                             mTxtBarcode.setText(getString(R.string.str_found_otp));
+
+                            String intentData = qrCodes.valueAt(0).rawValue;
                             Intent result = new Intent();
                             result.setData(Uri.parse(intentData));
+
                             setResult(RESULT_OK, result);
                             finish();
                         }

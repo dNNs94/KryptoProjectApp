@@ -34,7 +34,7 @@ public class OTPActivity extends AppCompatActivity {
     boolean isRequestIntervalStopped = false;
     // Finals
     private static final String TAG = "OTPActivity";
-    private static final String URL = "http://10.0.2.2:8080/request_otp_app";
+    private static final String URL = "http://10.0.2.2:8080/request_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

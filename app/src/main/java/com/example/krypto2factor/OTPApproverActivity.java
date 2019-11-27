@@ -21,7 +21,7 @@ import java.util.Map;
 public class OTPApproverActivity extends BroadcastReceiver {
 
     private static final String TAG = "OTPApproverActivity";
-    private static final String URL = "http://10.0.2.2:8080/verify_otp_app";
+    private static final String URL = "http://10.0.2.2:8080/verify_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2
 
     RequestQueue queue;
 

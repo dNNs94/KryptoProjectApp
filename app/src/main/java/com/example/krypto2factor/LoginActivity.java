@@ -40,11 +40,13 @@ import java.util.regex.Pattern;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+// ToDo: Make user stay logged in after successful auth: https://stackoverflow.com/questions/12744337/how-to-keep-android-applications-always-be-logged-in-state
+
 public class LoginActivity extends AppCompatActivity {
 
     // Finals
     private static final String TAG = "LoginActivity";
-    private static final String URL_LOGIN_PW = "http://10.0.2.2:8080/authenticate_app";
+    private static final String URL_LOGIN_PW = "http://10.0.2.2:8080/authenticate_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080
     private static final String URL_QR_CODE = "http://10.0.2.2:8080/verify_otp_app";
     private static final String URL_REG_DEV = "http://10.0.2.2:8080/insert_user_device";
     private static final int QR_REQUEST_CODE = 100;
@@ -142,23 +144,31 @@ public class LoginActivity extends AppCompatActivity {
                     try{
                         JSONObject jsonObject = new JSONObject(data.getDataString());
 
-                        String receivedOtp = jsonObject.getString("otp");
-                        String receivedUserId = jsonObject.getString("user_id");
+                        final String receivedOtp = jsonObject.getString("otp");
+                        final String receivedUserId = jsonObject.getString("user_id");
 
                         requestLoginWithQR(receivedUserId, receivedOtp, new VolleyCallback() {
                             @Override
                             public void onSuccess(String result) {
                                 if(result.contains("Verification valid")) {
-                                    requestDeviceRegistration(new VolleyCallback() {
+                                    requestDeviceRegistration(receivedUserId, new VolleyCallback() {
                                         @Override
                                         public void onSuccess(String result) {
                                             if(result.contains("Successfully inserted device")) {
                                                 Toast.makeText(getApplicationContext(), "Device registration complete!", Toast.LENGTH_SHORT).show();
-                                                getOtpIntent();
+                                                Intent otpIntent = getOtpIntent();
+                                                otpIntent.putExtra("deviceId", mDeviceId);
+                                                startActivity(otpIntent);
                                             }
-                                            else if(result.contains("Device is already active")) {
+                                            else if(result.contains("Device already active")) {
                                                 Toast.makeText(getApplicationContext(), "Logged in with active device!", Toast.LENGTH_SHORT).show();
+                                                Intent otpIntent = getOtpIntent();
                                                 getOtpIntent();
+                                                otpIntent.putExtra("deviceId", mDeviceId);
+                                                startActivity(otpIntent);
+                                            }
+                                            else if(result.contains("Device already registered")) {
+                                                Toast.makeText(getApplicationContext(), "Device already registered!", Toast.LENGTH_SHORT).show();
                                             }
                                             else {
                                                 Toast.makeText(getApplicationContext(), "Error during device registration!", Toast.LENGTH_LONG).show();
@@ -386,7 +396,7 @@ public class LoginActivity extends AppCompatActivity {
      * Volley request to register this device in database via py backend
      * @param callback callback method to handle result via Interface (see: {@link com.example.krypto2factor.Utils.VolleyCallback})
      */
-    private void requestDeviceRegistration(final VolleyCallback callback) {
+    private void requestDeviceRegistration(final String userId, final VolleyCallback callback) {
         Response.Listener<String> responseListener = new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -416,6 +426,7 @@ public class LoginActivity extends AppCompatActivity {
                 Map<String, String> mParams = new HashMap<String, String>();
                 mParams.put("device_id", mDeviceId);
                 mParams.put("device_name", Build.MODEL);
+                mParams.put("user_id", userId);
                 return mParams;
             }
         };
