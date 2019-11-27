@@ -130,6 +130,7 @@ public class LoginActivity extends AppCompatActivity {
                                     if(result.contains("Login successful")) {
                                         Intent intent = getOtpIntent();
                                         intent.putExtra("deviceId", mDeviceId);
+                                        Toast.makeText(getApplicationContext(), "Logged in with: " + Build.MODEL, Toast.LENGTH_SHORT).show();
                                         startActivity(intent);
                                     }
                                     else {
