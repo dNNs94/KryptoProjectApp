@@ -180,9 +180,8 @@ public class LoginActivity extends AppCompatActivity {
                                         public void onSuccess(String result) {
                                             if(result.contains("Successfully inserted device")) {
                                                 Toast.makeText(getApplicationContext(), "Device registration complete!", Toast.LENGTH_SHORT).show();
-                                                Intent otpIntent = getOtpIntent();
-                                                otpIntent.putExtra("deviceId", mDeviceId);
-                                                startActivity(otpIntent);
+                                                mEmailView.setError(getString(R.string.str_activate_prompt));
+                                                mEmailView.requestFocus();
                                             }
                                             else if(result.contains("Device already active")) {
                                                 Toast.makeText(getApplicationContext(), "Logged in with active device!", Toast.LENGTH_SHORT).show();

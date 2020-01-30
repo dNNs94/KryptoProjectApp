@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 
 import com.example.krypto2factor.NotificationID;
@@ -82,6 +84,17 @@ public class FCMService extends FirebaseMessagingService {
             notificationChannel.setLightColor(Color.BLUE);
             notificationChannel.setVibrationPattern(new long[]{0, 1000, 500, 1000});
             notificationManager.createNotificationChannel(notificationChannel);
+        }
+
+        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+        if (v != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
+            }
+            else {
+                v.vibrate(500);
+            }
         }
 
         JSONObject jsonObject = new JSONObject(body);
