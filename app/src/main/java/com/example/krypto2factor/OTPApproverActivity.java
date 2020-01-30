@@ -10,6 +10,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HurlStack;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.krypto2factor.Utils.VolleyCallback;
@@ -17,11 +18,13 @@ import com.example.krypto2factor.Utils.VolleyCallback;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.example.krypto2factor.Utils.CertificateManager.getHurlStack;
+
 
 public class OTPApproverActivity extends BroadcastReceiver {
 
     private static final String TAG = "OTPApproverActivity";
-    private static final String URL = "http://10.0.2.2:8080/verify_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2
+    private static final String URL = "https://172.50.1.12:443/verify_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2
 
     RequestQueue queue;
 
@@ -65,7 +68,8 @@ public class OTPApproverActivity extends BroadcastReceiver {
 
         Bundle intentBundle = intent.getExtras();
         if(queue == null) {
-            queue = Volley.newRequestQueue(context);
+            HurlStack hurlStack = getHurlStack(context);
+            queue = Volley.newRequestQueue(context, hurlStack);
         }
         String otp = intentBundle.getString("otp");
         String userID = intentBundle.getString("user_id");

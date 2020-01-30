@@ -21,8 +21,10 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HurlStack;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.krypto2factor.Utils.CertificateManager;
 import com.example.krypto2factor.Utils.VolleyCallback;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -40,14 +42,16 @@ import java.util.regex.Pattern;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import static com.example.krypto2factor.Utils.CertificateManager.getHurlStack;
+
 public class LoginActivity extends AppCompatActivity {
 
     // Finals
     private static final String TAG = "LoginActivity";
-    private static final String URL_LOGIN_PW = "http://10.0.2.2:8080/authenticate_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080
-    private static final String URL_QR_CODE = "http://10.0.2.2:8080/verify_otp_app";
-    private static final String URL_REG_DEV = "http://10.0.2.2:8080/insert_user_device";
-    private static final String URL_LOGIN_DEVICE_ID = "http://10.0.2.2:8080/login_account_app";
+    private static final String URL_LOGIN_PW = "https://172.50.1.12:443/authenticate_app"; // https://172.50.1.12 http://10.0.2.2:8080 https://5cd10f94.ngrok.io
+    private static final String URL_QR_CODE = "https://172.50.1.12:443/verify_otp_app";
+    private static final String URL_REG_DEV = "https://172.50.1.12:443/insert_user_device";
+    private static final String URL_LOGIN_DEVICE_ID = "https://172.50.1.12:443/login_account_app";
     private static final int QR_REQUEST_CODE = 100;
     // Volley Request queue
     RequestQueue queue;
@@ -106,8 +110,11 @@ public class LoginActivity extends AppCompatActivity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
+        // Get HurlStack for SSL Connection
+        HurlStack hurlStack = getHurlStack(this);
+
         // Create Request Queue
-        queue = Volley.newRequestQueue(this);
+        queue = Volley.newRequestQueue(this, hurlStack);
 
         // Get Device unique Token to identify in backend
         FirebaseInstanceId.getInstance().getInstanceId()
@@ -121,6 +128,7 @@ public class LoginActivity extends AppCompatActivity {
 
                         // Get new Instance ID token
                         mDeviceId = task.getResult().getToken();
+                        Log.d(TAG, "DEVICE ID FOUND: " + mDeviceId);
 
                         // Login user instantly if already has registered and activated this device
                         if(mDeviceId.length() > 0) {

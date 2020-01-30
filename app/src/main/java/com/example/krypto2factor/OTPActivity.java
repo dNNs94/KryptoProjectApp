@@ -13,6 +13,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HurlStack;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.krypto2factor.Utils.CircularProgressBar;
@@ -20,6 +21,8 @@ import com.example.krypto2factor.Utils.VolleyCallback;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.example.krypto2factor.Utils.CertificateManager.getHurlStack;
 
 public class OTPActivity extends AppCompatActivity {
 
@@ -34,24 +37,21 @@ public class OTPActivity extends AppCompatActivity {
     boolean isRequestIntervalStopped = false;
     // Finals
     private static final String TAG = "OTPActivity";
-    private static final String URL = "http://10.0.2.2:8080/request_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080/
+    private static final String URL = "https://172.50.1.12:443/request_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_otp);
 
-        /*if (savedInstanceState != null) {
-            // ToDo: restore timer
-        }
-        else{*/
-            Intent fromLoginIntent = getIntent();
-            final String deviceId = fromLoginIntent.getStringExtra("deviceId");
-            Log.d(TAG, "Received intent extra: " + deviceId);
-        //}
+        Intent fromLoginIntent = getIntent();
+        final String deviceId = fromLoginIntent.getStringExtra("deviceId");
+        Log.d(TAG, "Received intent extra: " + deviceId);
+
 
         if(queue == null) {
-            queue = Volley.newRequestQueue(this);
+            HurlStack hurlStack = getHurlStack(this);
+            queue = Volley.newRequestQueue(this, hurlStack);
         }
 
         mOtpText = findViewById(R.id.txt_otp);
@@ -86,7 +86,13 @@ public class OTPActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        // ToDo: Pause timer and save its state;
+        new Handler().removeCallbacksAndMessages(null);
+        isRequestIntervalStopped = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
         new Handler().removeCallbacksAndMessages(null);
         isRequestIntervalStopped = true;
     }
@@ -94,20 +100,24 @@ public class OTPActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        // ToDo: Resume timer for request
+        isRequestIntervalStopped = false;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         isRequestIntervalStopped = false;
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        // ToDo: Save state of the timer;
         isRequestIntervalStopped = true;
     }
 
     /**
      * Requests a new OTP from python backend
-     * @param deviceId unique identifier of the device (FCMID)
+     * @param deviceId unique identifier of the device (FCM-ID)
      * @param callback callback function to handle the result
      */
     private void requestOtp(final String deviceId, final VolleyCallback callback) {
@@ -144,9 +154,9 @@ public class OTPActivity extends AppCompatActivity {
     }
 
     /**
-     * Triggers new otp request in set interval, runtime handled in lifeclycle methods
+     * Triggers new otp request in set interval, runtime handled in lifecycle methods
      * @param delay time until next otp will be requested
-     * @param deviceId unique identifier of the device (FCMID)
+     * @param deviceId unique identifier of the device (FCM-ID)
      */
     private void triggerOtpRequestInterval(final int delay, final String deviceId) {
         if(isRequestIntervalStopped) {

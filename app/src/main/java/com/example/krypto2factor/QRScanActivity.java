@@ -108,7 +108,7 @@ public class QRScanActivity extends AppCompatActivity {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                     v.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE));
                                 }
-                                else{
+                                else {
                                     v.vibrate(500);
                                 }
                             }
