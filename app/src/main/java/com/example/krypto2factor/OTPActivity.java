@@ -212,6 +212,8 @@ public class OTPActivity extends AppCompatActivity {
                     public void onSuccess(String result) {
                         mOtpText.setText(getString(R.string.str_otp, result));
 
+                        new Handler().removeCallbacksAndMessages(null);
+
                         if(timer != null)
                             timer.cancel();
 
