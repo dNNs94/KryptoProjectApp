@@ -80,6 +80,8 @@ public class OTPActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         new Handler().removeCallbacksAndMessages(null);
+        if(timer != null)
+            timer.cancel();
         isRequestIntervalStopped = true;
     }
 
@@ -87,6 +89,8 @@ public class OTPActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         new Handler().removeCallbacksAndMessages(null);
+        if(timer != null)
+            timer.cancel();
         isRequestIntervalStopped = true;
     }
 
@@ -108,6 +112,8 @@ public class OTPActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         new Handler().removeCallbacksAndMessages(null);
+        if(timer != null)
+            timer.cancel();
         isRequestIntervalStopped = true;
     }
 
@@ -200,6 +206,9 @@ public class OTPActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(String result) {
                         mOtpText.setText(getString(R.string.str_otp, result));
+
+                        if(timer != null)
+                            timer.cancel();
 
                         timer = new CountDownTimer(delay, 1000) {
                             @Override
