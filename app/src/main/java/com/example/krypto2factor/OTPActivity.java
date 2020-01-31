@@ -69,7 +69,10 @@ public class OTPActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 new Handler().removeCallbacksAndMessages(null);
-                timer.cancel();
+
+                if(timer != null)
+                    timer.cancel();
+
                 triggerInitialRequest(deviceId);
                 mProgressBar.setAnimatedProgress(100, otpLifetime);
             }
