@@ -43,7 +43,7 @@ public class OTPActivity extends AppCompatActivity {
     // Finals
     private static final String TAG = "OTPActivity";
     private static final int otpLifetime = 60000;
-    private static final String URL = "https://172.50.1.12:443/request_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080/
+    private static final String URL = "https://10.0.2.2:443/request_otp_app"; // https://10.0.2.2:443/ https://172.50.1.12:443/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

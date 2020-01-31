@@ -48,7 +48,7 @@ public class LoginActivity extends AppCompatActivity {
 
     // Finals
     private static final String TAG = "LoginActivity";
-    private static final String URL_LOGIN_PW = "https://172.50.1.12:443/authenticate_app"; // https://172.50.1.12 http://10.0.2.2:8080 https://5cd10f94.ngrok.io
+    private static final String URL_LOGIN_PW = "https://172.50.1.12:443/authenticate_app"; // https://172.50.1.12 http://10.0.2.2:443
     private static final String URL_QR_CODE = "https://172.50.1.12:443/verify_otp_app";
     private static final String URL_REG_DEV = "https://172.50.1.12:443/insert_user_device";
     private static final String URL_LOGIN_DEVICE_ID = "https://172.50.1.12:443/login_account_app";

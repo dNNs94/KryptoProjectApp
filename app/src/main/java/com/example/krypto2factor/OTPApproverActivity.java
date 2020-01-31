@@ -28,7 +28,7 @@ import static com.example.krypto2factor.Utils.CertificateManager.getHurlStack;
 public class OTPApproverActivity extends BroadcastReceiver {
 
     private static final String TAG = "OTPApproverActivity";
-    private static final String URL = "https://172.50.1.12:443/verify_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2
+    private static final String URL = "https://10.0.2.2:443/verify_otp_app"; //  http://10.0.2.2:443/
 
     RequestQueue queue;
 
