@@ -26,4 +26,5 @@
     <string name="str_found_otp">Found OTP!</string>
     <string name="str_none">NONE</string>
     <string name="str_activate_prompt">Please mark your device as active using the web-interface</string>
+    <string name="refresh">Refresh</string>
 </resources>

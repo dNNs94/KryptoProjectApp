@@ -21,8 +21,6 @@ import com.google.firebase.messaging.RemoteMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Random;
-
 import androidx.core.app.NotificationCompat;
 
 import static android.app.PendingIntent.FLAG_CANCEL_CURRENT;
@@ -83,7 +81,8 @@ public class FCMService extends FirebaseMessagingService {
             notificationChannel.enableLights(true);
             notificationChannel.setLightColor(Color.BLUE);
             notificationChannel.setVibrationPattern(new long[]{0, 1000, 500, 1000});
-            notificationManager.createNotificationChannel(notificationChannel);
+            if(notificationManager != null)
+                notificationManager.createNotificationChannel(notificationChannel);
         }
 
         Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -101,10 +100,11 @@ public class FCMService extends FirebaseMessagingService {
         Intent approveIntent = new Intent(this, OTPApproverActivity.class);
         approveIntent.putExtra("otp", jsonObject.getString("otp"));
         approveIntent.putExtra("user_id", jsonObject.getString("user_id"));
+        approveIntent.putExtra("notificationId", UNIQUE_INT_PER_CALL);
         approveIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent approvePendingIntent =
-                PendingIntent.getBroadcast(this, UNIQUE_INT_PER_CALL, approveIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.getBroadcast(this, UNIQUE_INT_PER_CALL, approveIntent, FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         notificationBuilder.setAutoCancel(true)
@@ -118,6 +118,7 @@ public class FCMService extends FirebaseMessagingService {
                 .addAction(R.drawable.common_google_signin_btn_icon_dark_normal, "Approve",
                         approvePendingIntent);
 
-        notificationManager.notify(new Random().nextInt(), notificationBuilder.build());
+        if(notificationManager != null)
+            notificationManager.notify(UNIQUE_INT_PER_CALL, notificationBuilder.build());
     }
 }

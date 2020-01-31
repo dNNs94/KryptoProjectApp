@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -29,14 +31,18 @@ public class OTPActivity extends AppCompatActivity {
     // UI Components
     private TextView mOtpText;
     private TextView mCountdownText;
+    private Button mRefreshButton;
     private CircularProgressBar mProgressBar;
     // Volley Request queue
     RequestQueue queue;
     // Timer and switch to keep track of it
     CountDownTimer timer;
-    boolean isRequestIntervalStopped = false;
+    private boolean isRequestIntervalStopped = false;
+    // Device Id for access in lifecycle
+    private String deviceId;
     // Finals
     private static final String TAG = "OTPActivity";
+    private static final int otpLifetime = 60000;
     private static final String URL = "https://172.50.1.12:443/request_otp_app"; // https://9e01f831.ngrok.io/ http://10.0.2.2:8080/
 
     @Override
@@ -45,7 +51,7 @@ public class OTPActivity extends AppCompatActivity {
         setContentView(R.layout.activity_otp);
 
         Intent fromLoginIntent = getIntent();
-        final String deviceId = fromLoginIntent.getStringExtra("deviceId");
+        deviceId = fromLoginIntent.getStringExtra("deviceId");
         Log.d(TAG, "Received intent extra: " + deviceId);
 
 
@@ -56,28 +62,15 @@ public class OTPActivity extends AppCompatActivity {
 
         mOtpText = findViewById(R.id.txt_otp);
         mCountdownText = findViewById(R.id.txt_countdown);
+        mRefreshButton = findViewById(R.id.btn_refresh);
         mProgressBar = findViewById(R.id.pb_refresh);
-        final int otpLifetime = 60000;
 
-        requestOtp(deviceId, new VolleyCallback() {
+        mRefreshButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onSuccess(String result) {
-                mOtpText.setText(getString(R.string.str_otp, result));
-                timer = new CountDownTimer(otpLifetime, 1000) {
-                    @Override
-                    public void onTick(long millisUntilFinished) {
-                        long secondsLeft = (millisUntilFinished / 1000);
-                        String displayText = getString(R.string.str_otp_countdown, String.valueOf(secondsLeft));
-                        mCountdownText.setText(displayText);
-                    }
-
-                    @Override
-                    public void onFinish() {
-                        mCountdownText.setText(getString(R.string.str_req_new_otp));
-                    }
-                }.start();
-
-                triggerOtpRequestInterval(otpLifetime, deviceId);
+            public void onClick(View v) {
+                new Handler().removeCallbacksAndMessages(null);
+                timer.cancel();
+                triggerInitialRequest(deviceId);
                 mProgressBar.setAnimatedProgress(100, otpLifetime);
             }
         });
@@ -101,17 +94,20 @@ public class OTPActivity extends AppCompatActivity {
     protected void onRestart() {
         super.onRestart();
         isRequestIntervalStopped = false;
+        triggerInitialRequest(deviceId);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         isRequestIntervalStopped = false;
+        triggerInitialRequest(deviceId);
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        new Handler().removeCallbacksAndMessages(null);
         isRequestIntervalStopped = true;
     }
 
@@ -151,6 +147,39 @@ public class OTPActivity extends AppCompatActivity {
         };
 
         queue.add(otpReq);
+    }
+
+    /**
+     * Method to trigger the initial OTP request without delay
+     * @param deviceId unique identifier of the used device (FCM-ID)
+     */
+    private void triggerInitialRequest(final String deviceId) {
+        requestOtp(deviceId, new VolleyCallback() {
+            @Override
+            public void onSuccess(String result) {
+                mOtpText.setText(getString(R.string.str_otp, result));
+
+                if(timer != null)
+                    timer.cancel();
+
+                timer = new CountDownTimer(otpLifetime, 1000) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        long secondsLeft = (millisUntilFinished / 1000);
+                        String displayText = getString(R.string.str_otp_countdown, String.valueOf(secondsLeft));
+                        mCountdownText.setText(displayText);
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        mCountdownText.setText(getString(R.string.str_req_new_otp));
+                    }
+                }.start();
+
+                triggerOtpRequestInterval(otpLifetime, deviceId);
+                mProgressBar.setAnimatedProgress(100, otpLifetime);
+            }
+        });
     }
 
     /**
